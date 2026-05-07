@@ -46,15 +46,19 @@ const ContactForm = ({ language }) => {
     e.preventDefault();
     setStatus('sending');
     
-    // 1. Preparar os dados (FormData)
+    // 1. Preparar os dados (URLSearchParams é necessário para o Google Apps Script entender os campos)
     const formData = new FormData(e.target);
+    const data = new URLSearchParams(formData);
+
+    // 2. Abrir o WhatsApp imediatamente (antes do await) para evitar bloqueio de popup de navegadores mobile/desktop
+    window.open(t.whatsappUrl, '_blank');
     
     try {
-      // 2. Enviar para o Google Sheets ignorando o CORS do localhost
+      // 3. Enviar para o Google Sheets ignorando o CORS do localhost
       await fetch(GOOGLE_SCRIPT_URL, {
         method: 'POST',
         mode: 'no-cors',
-        body: formData
+        body: data
       });
       setStatus('success');
       e.target.reset();
@@ -62,8 +66,6 @@ const ContactForm = ({ language }) => {
       console.error("Erro ao enviar dados", error);
       setStatus('error');
     } finally {
-      // 3. Abrir o WhatsApp (acontece independente do CORS graças ao finally)
-      window.open(t.whatsappUrl, '_blank');
       setTimeout(() => setStatus(''), 5000);
     }
   };
